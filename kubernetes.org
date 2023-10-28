@@ -1,0 +1,181 @@
+#+title: Kubernetes
+
+* Prerequisites
+** Installing
+follow the link to install docker on your linux distribution system https://cloudcone.com/docs/article/how-to-install-docker-on-ubuntu-22-04-20-04/ or run the commands on your terminal
+#+begin_src shell
+sudo apt update
+sudo apt install apt-transport-https curl gnupg-agent ca-certificates software-properties-common -y
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+sudo apt install docker-ce docker-ce-cli containerd.io -y
+sudo usermod -aG docker $USER
+newgrp docker
+docker version
+
+#+end_src
+** Install kubectl
+follow the link in this website to install for any of your operating system https://kubernetes.io/docs/tasks/tools/
+for linux operating system such as ubuntu you can follow the step bellow and run the following commands in your terminal
+#+begin_src shell
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client
+
+#+end_src
+** Install minikube
+run the following commands on your terminal to install minikube on linux distribution like ubuntu
+#+begin_src shell
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+#+end_src
+
+* Creating a docker image of a python application and running the docker container on your system locally
+** Creating a docker image of a python application
+ Go to the directory where the python application is and run the following commands and create a DockerFile that tells docker how to create the application here is a sample of a docker file that create a docker image of a simple application
+#+begin_src shell
+FROM python:3.9-alpine
+WORKDIR /app
+COPY . .
+COPY requirements.txt requirements.txt
+COPY main.py main.py
+RUN pip install -r requirements.txt
+EXPOSE 5000
+CMD python main.py
+#+end_src
+Save the file and run the following commands in your terminal to create a docker image
+#+begin_src shell
+docker build -t 'the name you want to give the docker image' 'location of the application'
+docker build -t razkky/app:1.0 .
+#+end_src
+** Creating a docker container with a docker image
+Run the follwoing commands to start the docker conatinaer locally on your machine
+#+begin_src shell
+docker container run -d -p 'port':'port' 'name of the docker image'
+docker container run -d -p 5000:5000 razkky/app:1.0
+#+end_src
+To get the details of the containers run this commands
+#+begin_src shell
+docker container ls
+docker ps
+#+end_src
+run this command to stop the docker container
+#+begin_src shell
+docker container stop 'container_id'
+#+end_src
+Run this command to remove a docker container
+#+begin_src shell
+docker rm -f 'name of container' or 'container id'
+#+end_src
+
+* Creating different clusters using minikube and kubectl
+Start up minikube by running this command
+#+begin_src shell
+minikube start
+#+end_src
+** Creating the deployment and service .yml file
+The deployment file deployes the docker image on the kubernetes cluster like minikube while the service file enables access to the docker application from either lcoal machines or any machine on the web
+
+Example of deployment.yml file
+#+begin_src shell
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-webapp
+  labels:
+    app: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: webapp
+        image: webapp:1.0
+        ports:
+        - containerPort: 5000
+
+#+end_src
+
+Example of service.yml file
+#+begin_src shell
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - port: 5000
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 5000
+
+#+end_src
+
+After creating and configuring the deployment.yml and service.yml file the next step is the run both files configuration on ur cluster using kubectl
+
+Run the follwoing commans to apply the configuration to your cluster
+#+begin_src shell
+kubectl apply -f 'name of file'
+kubectl apply -f deployment.yml
+kubectl apply -f service.yml
+#+end_src
+
+Run this command to delete your deployment and service configuration from your minikube cluster
+#+begin_src shell
+kubectl delete -f .
+#+end_src
+Run the following commands to check for information about your pods on your minikube clusters
+#+begin_src shell
+kubectl get pods
+kubectl get all
+kubectl describe pods
+#+end_src
+
+Run the following command to get your minikube Ip address
+#+begin_src shell
+minikube ip
+#+end_src
+
+To run a minikube dashboard on your local machine Run this command
+#+begin_src shell
+minikube dashboard
+#+end_sr
+
+Run the following commands to give access to your service on your local machine when using a docker driver
+#+begin_src shell
+minikube service --url 'name of service'
+#+end_src
+
+* Creating helm chart and deploying your application on cluster using helm chart
+** Installing helm on ubuntu
+#+begin_src shell
+sudo snap install helm --classic
+#+end_src
+
+Run the following command the create a helm chat
+#+begin_src shell
+helm create 'name of chart'
+#+end_src
+
+** Edit the neccesary files created
+** Apply helm chart to your cluster
+
+Run this command to display your helm configuration template
+#+begin_src shell
+helm template 'name ofchart'
+#+end_src
+
+Run this command to install the helm chart to your cluster
+#+begin_src shell
+helm install 'name of pods' 'name of the chart'
+#+end_src
