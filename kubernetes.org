@@ -46,7 +46,7 @@ CMD python main.py
 #+end_src
 Save the file and run the following commands in your terminal to create a docker image
 #+begin_src shell
-docker build -t 'the name you want to give the docker image' 'location of the application'
+docker build -t 'the name you want to give the docker image' 'location of dokcerfile'
 docker build -t razkky/app:1.0 .
 #+end_src
 ** Creating a docker container with a docker image
@@ -178,4 +178,9 @@ helm template 'name ofchart'
 Run this command to install the helm chart to your cluster
 #+begin_src shell
 helm install 'name of pods' 'name of the chart'
+#+end_src
+
+Run this command to unistall the helm service
+#+begin_src shell
+helm uninstall 'name of service'
 #+end_src
